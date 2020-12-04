@@ -7,22 +7,26 @@ defaults:
   run:
     shell: bash
 
+env:
+  GIT_SSH_COMMAND: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+
 jobs:
   changelog:
     runs-on: ubuntu-latest
     env:
       flutter_version: "stable"
-      GIT_SSH_COMMAND: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
     steps:
       - uses: webfactory/ssh-agent@v0.4.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - uses: actions/checkout@v2
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v1
-        with:
-          path: /opt/hostedtoolcache/flutter
-          key: ${{ runner.OS }}-flutter-install-cache-${{ env.flutter_version }}
       - uses: subosito/flutter-action@v1.4.0
-      - run: flutter pub get
-      - run: flutter pub run izakaya pub changelog ${GITHUB_RUN_NUMBER} HEAD HEAD~3 > docs/changelog/${GITHUB_RUN_NUMBER}.md
+      - name: Work Boi
+        run: |
+          flutter pub get
+          mkdir -p docs/changelogs
+          flutter pub run izakaya pub changelog "${GITHUB_RUN_NUMBER}" HEAD HEAD~3 > docs/changelogs/build_${GITHUB_RUN_NUMBER}.md
+      - name: Publish to GitHub Wiki
+        uses: SwiftDocOrg/github-wiki-publish-action@1.0.0
+        with:
+          path: "docs"
