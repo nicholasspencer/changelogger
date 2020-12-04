@@ -8,7 +8,7 @@ defaults:
     shell: bash
 
 jobs:
-  analyze_app:
+  changelog:
     runs-on: ubuntu-latest
     env:
       GIT_SSH_COMMAND: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
