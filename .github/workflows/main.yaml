@@ -8,13 +8,12 @@ defaults:
     shell: bash
 
 env:
+  GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
   GIT_SSH_COMMAND: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
 
 jobs:
   changelog:
     runs-on: ubuntu-latest
-    env:
-      flutter_version: "stable"
     steps:
       - uses: webfactory/ssh-agent@v0.4.1
         with:
@@ -27,6 +26,6 @@ jobs:
           mkdir -p docs/changelogs
           flutter pub run izakaya pub changelog "${GITHUB_RUN_NUMBER}" HEAD HEAD~3 > docs/changelogs/build_${GITHUB_RUN_NUMBER}.md
       - name: Publish to GitHub Wiki
-        uses: SwiftDocOrg/github-wiki-publish-action@1.0.0
+        uses: SwiftDocOrg/github-wiki-publish-action@v1
         with:
           path: "docs"

@@ -135,7 +135,7 @@ packages:
     description:
       path: "."
       ref: develop
-      resolved-ref: "14b67fd2b55460f636f4ea642f2c92996f11d7f2"
+      resolved-ref: "62876f4d2351ee72bdd58a11516cd68c2c640d50"
       url: "git@github.com:resideo/izakaya.git"
     source: git
     version: "0.0.0"
@@ -158,7 +158,7 @@ packages:
     description:
       path: "packages/lantern_dart"
       ref: develop
-      resolved-ref: "0d8a6c1d2423d38dfd2ec9cf2ed5fc895519c70a"
+      resolved-ref: "2920fb42a758849a4332e2d271d354daade63083"
       url: "git@github.com:resideo/lantern_flutter.git"
     source: git
     version: "0.0.0"
