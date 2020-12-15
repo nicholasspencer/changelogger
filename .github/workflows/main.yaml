@@ -29,5 +29,16 @@ jobs:
         id: build-identifier
         run: echo "::set-output name=build-identifier::$(echo $(flutter pub run izakaya pub version)_${GITHUB_RUN_NUMBER})"
       - run: echo ${{steps.build-identifier.outputs.build-identifier}}
-      - run: mkdir -p docs/changelogs
-      - run: flutter pub run izakaya pub changelog "f00" HEAD HEAD~3 > docs/changelogs/build_${{steps.build-identifier.outputs.build-identifier}}.md
+      - name: Create tag
+        uses: actions/github-script@v3.1.0
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            github.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "refs/tags/${{steps.build-identifier.outputs.build-identifier}}",
+              sha: context.sha
+            })
+      # - run: mkdir -p docs/changelogs
+      # - run: flutter pub run izakaya pub changelog ${{steps.build-identifier.outputs.build-identifier}} HEAD HEAD~3 > docs/changelogs/build_${{steps.build-identifier.outputs.build-identifier}}.md
