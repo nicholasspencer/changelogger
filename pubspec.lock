@@ -158,7 +158,7 @@ packages:
     description:
       path: "packages/lantern_dart"
       ref: develop
-      resolved-ref: "2920fb42a758849a4332e2d271d354daade63083"
+      resolved-ref: b0bf8741a1832a84c04da2222eee2dbfa9dafe87
       url: "git@github.com:resideo/lantern_flutter.git"
     source: git
     version: "0.0.0"

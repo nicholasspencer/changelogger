@@ -1,18 +1,22 @@
 name: Generate Changelog
 
 on:
-  push:
+  workflow_dispatch:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 defaults:
   run:
     shell: bash
 
 env:
-  GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
   GIT_SSH_COMMAND: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
 
 jobs:
-  changelog:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - uses: webfactory/ssh-agent@v0.4.1
@@ -20,12 +24,16 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - uses: actions/checkout@v2
       - uses: subosito/flutter-action@v1.4.0
-      - name: Work Boi
-        run: |
-          flutter pub get
-          mkdir -p docs/changelogs
-          flutter pub run izakaya pub changelog "${GITHUB_RUN_NUMBER}" HEAD HEAD~3 > docs/changelogs/build_${GITHUB_RUN_NUMBER}.md
-      - name: Publish to GitHub Wiki
-        uses: SwiftDocOrg/github-wiki-publish-action@v1
-        with:
-          path: "docs"
+      - run: flutter pub get
+
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - run: mkdir -p docs/changelogs
+      - run: flutter pub run izakaya pub changelog "${GITHUB_RUN_NUMBER}" HEAD HEAD~3 > docs/changelogs/build_${GITHUB_RUN_NUMBER}.md
+
+  document:
+    runs-on: ubuntu-latest
+    steps:
+      - run: mkdir -p docs/changelogs
+      - run: flutter pub run izakaya pub changelog "${GITHUB_RUN_NUMBER}" HEAD HEAD~3 > docs/changelogs/build_${GITHUB_RUN_NUMBER}.md
