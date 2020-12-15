@@ -16,7 +16,7 @@ env:
   GIT_SSH_COMMAND: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
 
 jobs:
-  setup:
+  main:
     runs-on: ubuntu-latest
     steps:
       - uses: webfactory/ssh-agent@v0.4.1
@@ -25,15 +25,9 @@ jobs:
       - uses: actions/checkout@v2
       - uses: subosito/flutter-action@v1.4.0
       - run: flutter pub get
-
-  changelog:
-    runs-on: ubuntu-latest
-    steps:
+      - name: Build identifier
+        id: build-identifier
+        run: echo "::set-output name=build-identifier::$(echo $(flutter pub run izakaya pub version)_${GITHUB_RUN_NUMBER})"
+      - run: echo ${{steps.build-identifier.outputs.build-identifier}}
       - run: mkdir -p docs/changelogs
-      - run: flutter pub run izakaya pub changelog "${GITHUB_RUN_NUMBER}" HEAD HEAD~3 > docs/changelogs/build_${GITHUB_RUN_NUMBER}.md
-
-  document:
-    runs-on: ubuntu-latest
-    steps:
-      - run: mkdir -p docs/changelogs
-      - run: flutter pub run izakaya pub changelog "${GITHUB_RUN_NUMBER}" HEAD HEAD~3 > docs/changelogs/build_${GITHUB_RUN_NUMBER}.md
+      - run: flutter pub run izakaya pub changelog "f00" HEAD HEAD~3 > docs/changelogs/build_${{steps.build-identifier.outputs.build-identifier}}.md
