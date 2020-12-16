@@ -14,8 +14,12 @@ env:
   GIT_SSH_COMMAND: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
 
 jobs:
-  main:
+  finalize:
     runs-on: ubuntu-latest
+    outputs:
+      previous_version: ${{steps.sem-ver.outputs.current}}
+      current_version: ${{steps.sem-ver.outputs.previous}}
+      changelog: ${{steps.changelog.outputs.changelog}}
     steps:
       - uses: webfactory/ssh-agent@v0.4.1
         with:
@@ -23,20 +27,33 @@ jobs:
       - uses: actions/checkout@v2
       - uses: subosito/flutter-action@v1.4.0
       - run: flutter pub get
-      - name: Build identifier
-        id: build-identifier
-        run: echo "::set-output name=build-identifier::$(echo $(flutter pub run izakaya pub version)_${GITHUB_RUN_NUMBER})"
-      - run: echo ${{steps.build-identifier.outputs.build-identifier}}
-      - name: Create tag
+      - name: Semantic Versions
+        id: sem-ver
+        run: |
+          echo "::set-output name=current::$(echo $(flutter pub run izakaya pub version -b ${GITHUB_RUN_NUMBER}))"
+          echo "::set-output name=previous::$(echo $(flutter pub run izakaya pub version -b $((${GITHUB_RUN_NUMBER}-1))))"
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          echo "::set-output name=changelog::$(echo $(flutter pub run izakaya pub changelog ${{ steps.sem-ver.outputs.current }} HEAD ${{ steps.sem-ver.outputs.previous }}))"
+      # - run: mkdir -p docs/changelogs
+      # - run: flutter pub run izakaya pub changelog ${{steps.build-identifier.outputs.build-identifier}} HEAD HEAD~3 > docs/changelogs/build_${{steps.build-identifier.outputs.build-identifier}}.md
+      - name: Create Tag
         uses: actions/github-script@v3.1.0
         with:
           github-token: ${{ github.token }}
           script: |
-            github.git.createRef({
+            await github.git.createTag({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: "refs/tags/${{steps.build-identifier.outputs.build-identifier}}",
+              tag: "${{steps.sem-ver.outputs.current}}",
+              message: "${{steps.changelog.outputs.changelog}}",
+              object: context.sha,
+              type: "commit",
+            })
+            await github.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "refs/tags/${{steps.sem-ver.outputs.current}}",
               sha: context.sha
             })
-      # - run: mkdir -p docs/changelogs
-      # - run: flutter pub run izakaya pub changelog ${{steps.build-identifier.outputs.build-identifier}} HEAD HEAD~3 > docs/changelogs/build_${{steps.build-identifier.outputs.build-identifier}}.md
