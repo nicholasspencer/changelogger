@@ -14,17 +14,19 @@ env:
   GIT_SSH_COMMAND: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
 
 jobs:
-  finalize:
+  prepare:
     runs-on: ubuntu-latest
     outputs:
-      previous_version: ${{steps.sem-ver.outputs.current}}
-      current_version: ${{steps.sem-ver.outputs.previous}}
-      changelog: ${{steps.changelog.outputs.changelog}}
+      previous-version: ${{steps.sem-ver.outputs.current}}
+      current-version: ${{steps.sem-ver.outputs.previous}}
+      changelog-file: ${{steps.changelog.outputs.changelog-file}}
     steps:
       - uses: webfactory/ssh-agent@v0.4.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.ADMIN_PERSONAL_ACCESS_TOKEN }}
       - uses: subosito/flutter-action@v1.4.0
       - run: flutter pub get
       - name: Generate Semantic Versions
@@ -32,20 +34,22 @@ jobs:
         run: |
           echo "::set-output name=current::$(echo $(flutter pub run izakaya pub version -b ${GITHUB_RUN_NUMBER}))"
           echo "::set-output name=previous::$(echo $(flutter pub run izakaya pub version -b $((${GITHUB_RUN_NUMBER}-1))))"
-      # Debating on writing this to a temp file or to the repo
-      # Gotta do funky stuff because of the multi-line output
-      # https://github.community/t/set-output-truncates-multiline-strings/16852/2
       - name: Generate Changelog
         id: changelog
         run: |
-          CHANGELOG="$(flutter pub run izakaya pub changelog ${{ steps.sem-ver.outputs.current }} HEAD ${{ steps.sem-ver.outputs.previous }})"
-          CHANGELOG="${CHANGELOG//'%'/'%25'}"
-          CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
-          CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
-          echo "::set-output name=changelog::$(echo $CHANGELOG)"
-      # - run: mkdir -p docs/changelogs
-      # - run: flutter pub run izakaya pub changelog ${{steps.build-identifier.outputs.build-identifier}} HEAD HEAD~3 > docs/changelogs/build_${{steps.build-identifier.outputs.build-identifier}}.md
-      - run: echo "${{ steps.changelog.outputs.changelog }}"
+          mkdir -p docs/changelogs
+          flutter pub run izakaya pub changelog ${{ steps.sem-ver.outputs.current }} HEAD ${{ steps.sem-ver.outputs.previous }} > docs/changelogs/${{ steps.sem-ver.outputs.current }}.md
+          echo "::set-output name=changelog-file::$(echo $(flutter pub run izakaya pub version -b ${GITHUB_RUN_NUMBER}))"
+      - run: echo "${{ steps.changelog.outputs.changelog_file }}"
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Prepare ${{ steps.sem-ver.outputs.current }}
+  finalize:
+    runs-on: ubuntu-latest
+    needs:
+      - prepare
+    steps:
+      - uses: actions/checkout@v2
       - name: Create Release
         uses: actions/github-script@v3.1.0
         with:
@@ -54,7 +58,7 @@ jobs:
             await github.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              tag_name: "${{steps.sem-ver.outputs.current}}",
+              tag_name: "${{ needs.prepare.outputs.current-version }}",
               target_commitish: context.sha,
-              body: "${{steps.changelog.outputs.changelog}}",
+              body: "${{ needs.prepare.outputs.changelog-file }}",
             })
