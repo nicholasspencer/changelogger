@@ -26,7 +26,7 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.head_ref }}
+          ref: HEAD^
           fetch-depth: 0
           token: ${{ secrets.ADMIN_PERSONAL_ACCESS_TOKEN }}
       - uses: subosito/flutter-action@v1.4.0
@@ -52,6 +52,8 @@ jobs:
     steps:
       - run: echo "$(cat ${{ steps.changelog.outputs.changelog-file }})"
       - uses: actions/checkout@v2
+        with:
+          ref: HEAD^
       - name: Create Release
         uses: actions/github-script@v3.1.0
         with:
