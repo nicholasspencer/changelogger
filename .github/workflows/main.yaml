@@ -17,9 +17,9 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      previous-version: ${{steps.sem-ver.outputs.current}}
-      current-version: ${{steps.sem-ver.outputs.previous}}
-      changelog-file: ${{steps.changelog.outputs.changelog-file}}
+      previous-version: ${{ steps.sem-ver.outputs.current }}
+      current-version: ${{ steps.sem-ver.outputs.previous }}
+      changelog-file: ${{ steps.changelog.outputs.changelog-file }}
     steps:
       - uses: webfactory/ssh-agent@v0.4.1
         with:
@@ -39,25 +39,26 @@ jobs:
         run: |
           mkdir -p docs/changelogs
           flutter pub run izakaya pub changelog ${{ steps.sem-ver.outputs.current }} HEAD ${{ steps.sem-ver.outputs.previous }} > docs/changelogs/${{ steps.sem-ver.outputs.current }}.md
-          echo "::set-output name=changelog-file::$(echo $(flutter pub run izakaya pub version -b ${GITHUB_RUN_NUMBER}))"
-      - run: echo "${{ steps.changelog.outputs.changelog_file }}"
-      - uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: Prepare ${{ steps.sem-ver.outputs.current }}
+          echo "::set-output name=changelog-file::$(echo "docs/changelogs/${{ steps.sem-ver.outputs.current }}.md")"
+      - run: echo "$(cat ${{ steps.changelog.outputs.changelog-file }})"
+      # - uses: stefanzweifel/git-auto-commit-action@v4
+      #   with:
+      #     commit_message: Prepare ${{ steps.sem-ver.outputs.current }}
   finalize:
     runs-on: ubuntu-latest
     needs: [prepare]
     steps:
-      - uses: actions/checkout@v2
-      - name: Create Release
-        uses: actions/github-script@v3.1.0
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            await github.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: "${{ needs.prepare.outputs.current-version }}",
-              target_commitish: context.sha,
-              body: "$(cat ${{ needs.prepare.outputs.changelog-file }})",
-            })
+      - run: echo ${{ needs.prepare.outputs.changelog-file }}
+      # - uses: actions/checkout@v2
+      # - name: Create Release
+      #   uses: actions/github-script@v3.1.0
+      #   with:
+      #     github-token: ${{ github.token }}
+      #     script: |
+      #       await github.repos.createRelease({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         tag_name: "${{ needs.prepare.outputs.current-version }}",
+      #         target_commitish: context.sha,
+      #         body: "$(cat ${{ needs.prepare.outputs.changelog-file }})",
+      #       })
