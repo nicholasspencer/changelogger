@@ -135,7 +135,7 @@ packages:
     description:
       path: "."
       ref: develop
-      resolved-ref: e0cb4f581f27a87fca0b4b2b9b6dc1d134c1bffd
+      resolved-ref: fb30de3c6236ad1804adf6bae639f8e4fb70cae4
       url: "git@github.com:resideo/izakaya.git"
     source: git
     version: "0.0.1"
