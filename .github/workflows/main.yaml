@@ -35,20 +35,20 @@ jobs:
       - name: Generate Changelog
         id: changelog
         run: |
-          echo "::set-output name=changelog::$(echo $(flutter pub run izakaya pub changelog ${{ steps.sem-ver.outputs.current }} HEAD ${{ steps.sem-ver.outputs.previous }}))"
+          echo "::set-output name=changelog::$(echo "$(flutter pub run izakaya pub changelog ${{ steps.sem-ver.outputs.current }} HEAD ${{ steps.sem-ver.outputs.previous }})")"
       # - run: mkdir -p docs/changelogs
       # - run: flutter pub run izakaya pub changelog ${{steps.build-identifier.outputs.build-identifier}} HEAD HEAD~3 > docs/changelogs/build_${{steps.build-identifier.outputs.build-identifier}}.md
       - run: echo ${{steps.changelog.outputs.changelog}}
-      # - name: Create Release
-      #   uses: actions/github-script@v3.1.0
-      #   with:
-      #     github-token: ${{ github.token }}
-      #     script: |
-      #       await github.repos.createRelease({
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         tag_name: "${{steps.sem-ver.outputs.current}}",
-      #         target_commitish: context.sha,
-      #         body: "${{steps.changelog.outputs.changelog}}",
-      #         type: "commit",
-      #       })
+      - name: Create Release
+        uses: actions/github-script@v3.1.0
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            await github.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: "${{steps.sem-ver.outputs.current}}",
+              target_commitish: context.sha,
+              body: "${{steps.changelog.outputs.changelog}}",
+              type: "commit",
+            })
